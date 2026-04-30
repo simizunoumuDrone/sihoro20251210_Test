@@ -1,52 +1,28 @@
-<!DOCTYPE html>
-<html lang="ja">
-<head>
-<meta charset="utf-8">
-<title>Leaflet Rectangle Test</title>
+var map = L.map('map');
 
-<link
-  rel="stylesheet"
-  href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.cssm/leaflet@1.9.js
-</script>
+// 背景地図
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  attribution: '© OpenStreetMap contributors'
+}).addTo(map);
 
-<style>
-html, body {
-  margin: 0;
-  padding: 0;
-  height: 100%;
-}
-#map {
-  width: 100%;
-  height: 100%;
-}
-</style>
-</head>
+var bounds = [
+  [43.164612494, 143.139904716],
+  [43.16595066,  143.143384195]
+];
 
-<body>
-<div id="map"></div>
+// ★ 背景をわざと赤くする
+L.rectangle(bounds, {
+  color: 'red',
+  weight: 1,
+  fillOpacity: 0.8
+}).addTo(map);
 
-<script>
-  // 地図初期化
-  var map = L.map('map').setView([43.1653, 143.1416], 17);
+// ★ PNGを半透明で重ねる（ここが重要）
+L.imageOverlay(
+  'https://simizunumDrone.github.io/sohoron20251210_Test/sohoro_20251210.png',
+  bounds,
+  { opacity: 0.3 }
+).addTo(map);
 
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: '© OpenStreetMap contributors'
-  }).addTo(map);
-
-  // あなたの bounds
-  var bounds = [
-    [43.164612494, 143.139904716],
-    [43.16595066,  143.143384195]
-  ];
-
-  // 赤い四角
-  L.rectangle(bounds, {
-    color: 'red',
-    weight: 2,
-    fillOpacity: 0.3
-  }).addTo(map);
-
-  map.fitBounds(bounds);
-</script>
-</body>
-</html>
+map.fitBounds(bounds);
+``
