@@ -1,28 +1,68 @@
-var map = L.map('map');
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <title>Leaflet PNG Debug Full</title>
 
-// 背景地図
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-  attribution: '© OpenStreetMap contributors'
-}).addTo(map);
+  <!-- Leaflet CSS -->
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+  />
 
-var bounds = [
-  [43.164612494, 143.139904716],
-  [43.16595066,  143.143384195]
-];
+  <!-- Leaflet JS -->
+  <script
+    src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js">
+  </script>
 
-// ★ 背景をわざと赤くする
-L.rectangle(bounds, {
-  color: 'red',
-  weight: 1,
-  fillOpacity: 0.8
-}).addTo(map);
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+    }
+    #map {
+      width: 100%;
+      height: 100%;
+    }
+  </style>
+</head>
 
-// ★ PNGを半透明で重ねる（ここが重要）
-L.imageOverlay(
-  'https://simizunumDrone.github.io/sohoron20251210_Test/sohoro_20251210.png',
-  bounds,
-  { opacity: 0.3 }
-).addTo(map);
+<body>
+  <div id="map"></div>
 
-map.fitBounds(bounds);
-``
+  <script>
+    // 地図を作成
+    var map = L.map('map');
+
+    // 背景地図
+    L.tileLayer(
+      'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+      { attribution: '© OpenStreetMap contributors' }
+    ).addTo(map);
+
+    // あなたが確定させた正しい bounds
+    var bounds = [
+      [43.164612494, 143.139904716], // 南西
+      [43.16595066,  143.143384195]  // 北東
+    ];
+
+    // デバッグ用：赤い四角（必ず見える）
+    L.rectangle(bounds, {
+      color: 'red',
+      weight: 2,
+      fillOpacity: 0.4
+    }).addTo(map);
+
+    // PNG を半透明で重ねる
+    L.imageOverlay(
+      'https://simizunumDrone.github.io/sohoron20251210_Test/sihoro_20251210.png',
+      bounds,
+      { opacity: 0.3 }
+    ).addTo(map);
+
+    // 画像範囲に必ずズーム
+    map.fitBounds(bounds);
+  </script>
+</body>
+</html>
