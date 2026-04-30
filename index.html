@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Leaflet 自動探索・診断</title>
+  <title>Leaflet 自動探索・診断（sihoro対応）</title>
 
   <style>
     html, body { margin:0; padding:0; width:100%; height:100%; }
@@ -27,24 +27,26 @@
   const logEl = document.getElementById('log');
   const log = (msg) => { logEl.textContent = msg; };
 
-  // ここを変えなくてOK（候補パスを自動探索）
+  // Leaflet の候補パス（置き場が違っても自動で探します）
   const CANDIDATES = [
-    { base: "./leaflet",       css: "leaflet.css", js: "leaflet.js" },       // ./leaflet/leaflet.js
-    { base: "./leaflet/dist",  css: "leaflet.css", js: "leaflet.js" },       // ./leaflet/dist/leaflet.js
-    { base: "./dist",          css: "leaflet.css", js: "leaflet.js" },       // ./dist/leaflet.js
+    { base: "./leaflet",       css: "leaflet.css", js: "leaflet.js" },      // ./leaflet/leaflet.js
+    { base: "./leaflet/dist",  css: "leaflet.css", js: "leaflet.js" },      // ./leaflet/dist/leaflet.js
+    { base: "./dist",          css: "leaflet.css", js: "leaflet.js" },      // ./dist/leaflet.js
   ];
 
-  // CDNフォールバック（社内ネットワークでブロックされる場合は失敗します）
+  // もし社内ネットワークで CDN が使えない場合は失敗します（診断目的の予備）
   const CDN = {
     css: "https://unpkg.com/leaflet@1.9.4/dist/leaflet.css",
     js:  "https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
   };
 
-  // あなたの画像（ある場合だけ表示します）
+  // 画像の表示範囲（確定値）
   const BOUNDS = [
     [43.164612494, 143.139904716],
     [43.16595066,  143.143384195]
   ];
+
+  // ★ファイル名は sihoro に統一（jpg/JPG も両方探す）
   const IMAGE_CANDIDATES = [
     "./sihoro_20251210.jpg",
     "./sihoro_20251210.JPG"
@@ -73,5 +75,27 @@
 
   async function urlExists(url) {
     try {
-      // 同一オリジンなので HEAD が通ることが多い（ダメならGETで代替）
       const r = await fetch(url + "?v=" + Date.now(), { method: "HEAD" });
+      return r.ok;
+    } catch {
+      try {
+        const r = await fetch(url + "?v=" + Date.now(), { method: "GET" });
+        return r.ok;
+      } catch {
+        return false;
+      }
+    }
+  }
+
+  async function tryLocalLeaflet() {
+    for (const c of CANDIDATES) {
+      const cssUrl = `${c.base}/${c.css}`;
+      const jsUrl  = `${c.base}/${c.js}`;
+
+      const cssOk = await urlExists(cssUrl);
+      const jsOk  = await urlExists(jsUrl);
+
+      log(
+        "Leaflet 自動探索中…\n\n" +
+        `候補: ${c.base}\n` +
+        `  CSS: ${cssUrl} => ${cssOk ? "OK" : "NG"}\n` +
