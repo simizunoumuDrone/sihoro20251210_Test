@@ -3,34 +3,75 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>反映確認</title>
+  <title>Leaflet 自動探索・診断</title>
+
   <style>
-    html, body { margin: 0; padding: 0; }
-    #banner {
-      position: fixed;
-      top: 0; left: 0; right: 0;
-      z-index: 999999;
-      background: #d00000;
-      color: #ffffff;
-      padding: 10px 12px;
-      font: 16px/1.4 sans-serif;
+    html, body { margin:0; padding:0; width:100%; height:100%; }
+    #map { width:100%; height:100%; }
+    #log {
+      position: fixed; left: 10px; top: 10px; z-index: 999999;
+      background: rgba(0,0,0,0.80); color: #fff;
+      padding: 10px 12px; border-radius: 8px;
+      font: 13px/1.4 sans-serif;
+      max-width: 92vw; white-space: pre-wrap;
     }
-    #note {
-      margin-top: 60px;
-      padding: 12px;
-      font: 14px/1.6 sans-serif;
-    }
-    code { background: #f3f3f3; padding: 2px 6px; border-radius: 4px; }
   </style>
 </head>
 
 <body>
-  <div id="banner">✅ TEST-123（この赤帯が見えれば、最新index.htmlが配信されています）</div>
+  <div id="map"></div>
+  <div id="log">起動中…</div>
 
-  <div id="note">
-    <p>これは <strong>反映確認専用</strong> のページです。地図やLeafletはまだ読み込みません。</p>
-    <p>赤帯の <code>TEST-123</code> が見えれば、GitHub Pages の更新が反映できています。</p>
-    <p>見えなければ、キャッシュ or URL違いの可能性が高いです。</p>
-  </div>
-</body>
-</html>
+<script>
+(function () {
+  const logEl = document.getElementById('log');
+  const log = (msg) => { logEl.textContent = msg; };
+
+  // ここを変えなくてOK（候補パスを自動探索）
+  const CANDIDATES = [
+    { base: "./leaflet",       css: "leaflet.css", js: "leaflet.js" },       // ./leaflet/leaflet.js
+    { base: "./leaflet/dist",  css: "leaflet.css", js: "leaflet.js" },       // ./leaflet/dist/leaflet.js
+    { base: "./dist",          css: "leaflet.css", js: "leaflet.js" },       // ./dist/leaflet.js
+  ];
+
+  // CDNフォールバック（社内ネットワークでブロックされる場合は失敗します）
+  const CDN = {
+    css: "https://unpkg.com/leaflet@1.9.4/dist/leaflet.css",
+    js:  "https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+  };
+
+  // あなたの画像（ある場合だけ表示します）
+  const BOUNDS = [
+    [43.164612494, 143.139904716],
+    [43.16595066,  143.143384195]
+  ];
+  const IMAGE_CANDIDATES = [
+    "./sihoro_20251210.jpg",
+    "./sihoro_20251210.JPG"
+  ];
+
+  function loadCSS(url) {
+    return new Promise((resolve, reject) => {
+      const link = document.createElement("link");
+      link.rel = "stylesheet";
+      link.href = url + (url.includes("?") ? "" : ("?v=" + Date.now()));
+      link.onload = () => resolve(url);
+      link.onerror = () => reject(new Error("CSS failed: " + url));
+      document.head.appendChild(link);
+    });
+  }
+
+  function loadJS(url) {
+    return new Promise((resolve, reject) => {
+      const s = document.createElement("script");
+      s.src = url + (url.includes("?") ? "" : ("?v=" + Date.now()));
+      s.onload = () => resolve(url);
+      s.onerror = () => reject(new Error("JS failed: " + url));
+      document.head.appendChild(s);
+    });
+  }
+
+  async function urlExists(url) {
+    try {
+      // 同一オリジンなので HEAD が通ることが多い（ダメならGETで代替）
+      const r = await fetch(url + "?v=" + Date.now(), { method: "HEAD" });
