@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
 <meta charset="utf-8">
-<title>PNG Overlay Final</title>
+<title>Leaflet Bounds Test</title>
 
 <link
   rel="stylesheet"
@@ -17,7 +17,6 @@
 html, body {
   margin: 0;
   padding: 0;
-  width: 100%;
   height: 100%;
 }
 #map {
@@ -31,31 +30,28 @@ html, body {
 <div id="map"></div>
 
 <script>
-  // 地図初期化
+  // 地図
   var map = L.map('map');
 
-  // 背景地図
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: '© OpenStreetMap contributors'
+    attribution: '© OpenStreetMap'
   }).addTo(map);
 
-  // PNG（フルURL）
-  var imageUrl =
-    'https://simizunoumuDrone.github.io/sihoro20251210_Test/sihoro_20251210.png';
-
-  // あなたが QGIS で出した正しい範囲
-  var imageBounds = [
-    [43.164612494, 143.139904716],  // 南西
-    [43.16595066,  143.143384195]   // 北東
+  // あなたが出した正しい範囲
+  var bounds = [
+    [43.164612494, 143.139904716],
+    [43.16595066,  143.143384195]
   ];
 
-  // PNGを重ねる
-  L.imageOverlay(imageUrl, imageBounds, {
-    opacity: 1.0
+  // ★ 赤い四角を描く（PNGは一切使わない）
+  L.rectangle(bounds, {
+    color: "red",
+    weight: 2,
+    fillOpacity: 0.4
   }).addTo(map);
 
-  // 必ず画像にズーム
-  map.fitBounds(imageBounds);
+  // 必ずそこへズーム
+  map.fitBounds(bounds);
 </script>
 </body>
 </html>
