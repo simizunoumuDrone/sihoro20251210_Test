@@ -3,99 +3,129 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Leaflet 自動探索・診断（sihoro対応）</title>
-
+  <title>Leaflet ローダー診断（fetch不使用）</title>
   <style>
     html, body { margin:0; padding:0; width:100%; height:100%; }
     #map { width:100%; height:100%; }
     #log {
       position: fixed; left: 10px; top: 10px; z-index: 999999;
-      background: rgba(0,0,0,0.80); color: #fff;
+      background: rgba(0,0,0,0.82); color: #fff;
       padding: 10px 12px; border-radius: 8px;
       font: 13px/1.4 sans-serif;
       max-width: 92vw; white-space: pre-wrap;
     }
   </style>
 </head>
-
 <body>
   <div id="map"></div>
-  <div id="log">起動中…</div>
+  <div id="log">開始…</div>
 
-<script>
-(function () {
-  const logEl = document.getElementById('log');
-  const log = (msg) => { logEl.textContent = msg; };
+  <script>
+    const logEl = document.getElementById('log');
+    const log = (s) => { logEl.textContent = s; };
 
-  // Leaflet の候補パス（置き場が違っても自動で探します）
-  const CANDIDATES = [
-    { base: "./leaflet",       css: "leaflet.css", js: "leaflet.js" },      // ./leaflet/leaflet.js
-    { base: "./leaflet/dist",  css: "leaflet.css", js: "leaflet.js" },      // ./leaflet/dist/leaflet.js
-    { base: "./dist",          css: "leaflet.css", js: "leaflet.js" },      // ./dist/leaflet.js
-  ];
+    // ここだけ：候補パス（置き場がどこでも順番に試す）
+    const candidates = [
+      { name: 'leaflet/',      css: './leaflet/leaflet.css',      js: './leaflet/leaflet.js' },
+      { name: 'leaflet/dist/', css: './leaflet/dist/leaflet.css', js: './leaflet/dist/leaflet.js' },
+      { name: 'dist/',         css: './dist/leaflet.css',         js: './dist/leaflet.js' }
+    ];
 
-  // もし社内ネットワークで CDN が使えない場合は失敗します（診断目的の予備）
-  const CDN = {
-    css: "https://unpkg.com/leaflet@1.9.4/dist/leaflet.css",
-    js:  "https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
-  };
+    // 画像（sihoroで固定、jpg/JPG両方試す）
+    const imageCandidates = [
+      './sihoro_20251210.jpg',
+      './sihoro_20251210.JPG'
+    ];
 
-  // 画像の表示範囲（確定値）
-  const BOUNDS = [
-    [43.164612494, 143.139904716],
-    [43.16595066,  143.143384195]
-  ];
+    const bounds = [
+      [43.164612494, 143.139904716],
+      [43.16595066,  143.143384195]
+    ];
 
-  // ★ファイル名は sihoro に統一（jpg/JPG も両方探す）
-  const IMAGE_CANDIDATES = [
-    "./sihoro_20251210.jpg",
-    "./sihoro_20251210.JPG"
-  ];
-
-  function loadCSS(url) {
-    return new Promise((resolve, reject) => {
-      const link = document.createElement("link");
-      link.rel = "stylesheet";
-      link.href = url + (url.includes("?") ? "" : ("?v=" + Date.now()));
-      link.onload = () => resolve(url);
-      link.onerror = () => reject(new Error("CSS failed: " + url));
-      document.head.appendChild(link);
-    });
-  }
-
-  function loadJS(url) {
-    return new Promise((resolve, reject) => {
-      const s = document.createElement("script");
-      s.src = url + (url.includes("?") ? "" : ("?v=" + Date.now()));
-      s.onload = () => resolve(url);
-      s.onerror = () => reject(new Error("JS failed: " + url));
-      document.head.appendChild(s);
-    });
-  }
-
-  async function urlExists(url) {
-    try {
-      const r = await fetch(url + "?v=" + Date.now(), { method: "HEAD" });
-      return r.ok;
-    } catch {
-      try {
-        const r = await fetch(url + "?v=" + Date.now(), { method: "GET" });
-        return r.ok;
-      } catch {
-        return false;
-      }
+    function loadCSS(href) {
+      return new Promise((resolve, reject) => {
+        const link = document.createElement('link');
+        link.rel = 'stylesheet';
+        link.href = href + '?v=' + Date.now();
+        link.onload = () => resolve(href);
+        link.onerror = () => reject(new Error('CSS load failed: ' + href));
+        document.head.appendChild(link);
+      });
     }
-  }
 
-  async function tryLocalLeaflet() {
-    for (const c of CANDIDATES) {
-      const cssUrl = `${c.base}/${c.css}`;
-      const jsUrl  = `${c.base}/${c.js}`;
+    function loadJS(src) {
+      return new Promise((resolve, reject) => {
+        const s = document.createElement('script');
+        s.src = src + '?v=' + Date.now();
+        s.onload = () => resolve(src);
+        s.onerror = () => reject(new Error('JS load failed: ' + src));
+        document.head.appendChild(s);
+      });
+    }
 
-      const cssOk = await urlExists(cssUrl);
-      const jsOk  = await urlExists(jsUrl);
+    async function tryLoadLeaflet() {
+      for (const c of candidates) {
+        log('Leaflet読込中…\n試行: ' + c.name + '\nCSS: ' + c.css + '\nJS : ' + c.js);
+        try {
+          await loadCSS(c.css);
+          await loadJS(c.js);
+          if (typeof L !== 'undefined') {
+            return c;
+          }
+          throw new Error('Loaded but L is undefined');
+        } catch (e) {
+          log('失敗: ' + c.name + '\n' + e.message + '\n次を試します…');
+        }
+      }
+      throw new Error('Leafletをどの候補からも読み込めませんでした');
+    }
 
-      log(
-        "Leaflet 自動探索中…\n\n" +
-        `候補: ${c.base}\n` +
-        `  CSS: ${cssUrl} => ${cssOk ? "OK" : "NG"}\n` +
+    function tryLoadImage(map) {
+      return new Promise((resolve) => {
+        let idx = 0;
+        const next = () => {
+          if (idx >= imageCandidates.length) return resolve(null);
+          const url = imageCandidates[idx++] + '?v=' + Date.now();
+
+          // 画像の存在確認は <img> の onload/onerror で（fetch不使用）
+          const img = new Image();
+          img.onload = () => resolve(url);
+          img.onerror = () => next();
+          img.src = url;
+        };
+        next();
+      });
+    }
+
+    function startMap(leafletInfo, imageUrl) {
+      const map = L.map('map');
+      const osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors'
+      }).addTo(map);
+
+      // 目印：赤い四角
+      L.rectangle(bounds, { color: 'red', weight: 2, fillOpacity: 0.15 }).addTo(map);
+      map.fitBounds(bounds);
+
+      if (imageUrl) {
+        L.imageOverlay(imageUrl, bounds, { opacity: 1.0 }).addTo(map);
+        log('✅ 起動成功\nLeaflet: ' + leafletInfo.name + '\n画像: ' + imageUrl + '\n（赤枠＋画像が見えればOK）');
+      } else {
+        log('✅ Leafletは起動しましたが、画像が見つかりません\nLeaflet: ' + leafletInfo.name +
+            '\n探したファイル: sihoro_20251210.jpg / sihoro_20251210.JPG\n→ ファイル名（大小）と場所を確認してください');
+      }
+
+      // レイヤ切替（ダッシュボード化）
+      const overlays = {};
+      if (imageUrl) overlays['解析画像（sihoro_20251210）'] = L.imageOverlay(imageUrl, bounds, { opacity: 1.0 });
+      L.control.layers({ '地図（OSM）': osm }, overlays).addTo(map);
+    }
+
+    (async () => {
+      try {
+        const info = await tryLoadLeaflet();
+        const mapTemp = {}; // ダミー
+        const imgUrl = await tryLoadImage(mapTemp);
+        startMap(info, imgUrl);
+      } catch (e) {
+        log('❌ 起動失敗\n' + e.message + '\n\n原因：leaflet.js/leaflet.css が Pages から読めていない可能性が高いです。\n' +
