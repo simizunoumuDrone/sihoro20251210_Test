@@ -1,10 +1,13 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-<meta charset="utf-8" />
-<title>テスト地図</title>
+<meta charset="utf-8">
+<title>地図テスト</title>
 
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<link
+  rel="stylesheet"
+  href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+/>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
 <style>
@@ -19,12 +22,21 @@
 <div id="map"></div>
 
 <script>
-  var map = L.map('map').setView([43.0, 142.0], 6);
+  var map = L.map('map').setView([43.2, 142.8], 8);
 
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution: '© OpenStreetMap'
   }).addTo(map);
+
+  // ★ここが重要（PNGの名前を指定）
+  var imageUrl = 'sohoro_20251210.png';
+
+  var imageBounds = [
+    [42.8, 142.2],
+    [43.6, 143.4]
+  ];
+
+  L.imageOverlay(imageUrl, imageBounds).addTo(map);
 </script>
 </body>
 </html>
-``
