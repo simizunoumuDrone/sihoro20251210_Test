@@ -3,51 +3,81 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Web GIS ダッシュボード</title>
+  <title>Web GIS（診断）</title>
 
-  <!-- ✅ Leafletをリポジトリ内から読み込み（CDN不使用） -->
-  <link rel="stylesheet" href="./leaflet/leaflet.css" />
-  <script src="./leaflet/leaflet.js"></script>
+  <!-- ローカル同梱 Leaflet -->
+  <link rel="stylesheet" href="./leaflet/leaflet.css?v=1" />
+  <script src="./leaflet/leaflet.js?v=1"></script>
 
   <style>
     html, body { margin: 0; padding: 0; width: 100%; height: 100%; }
     #map { width: 100%; height: 100%; }
+    #err {
+      position: fixed; left: 10px; bottom: 10px; z-index: 99999;
+      background: rgba(0,0,0,0.78); color: #fff;
+      padding: 10px 12px; border-radius: 8px;
+      font: 13px/1.4 sans-serif; display: none;
+      max-width: 92vw; white-space: pre-wrap;
+    }
   </style>
 </head>
 
 <body>
   <div id="map"></div>
+  <div id="err"></div>
 
   <script>
-    // 確定した bounds（EPSG:4326）
+    const errBox = document.getElementById('err');
+    function showErr(msg) {
+      errBox.style.display = 'block';
+      errBox.textContent = msg;
+    }
+
+    // 画面が真っ白でも、JSエラーは必ず表示する
+    window.addEventListener('error', (e) => {
+      showErr('JSエラー:\n' + (e.message || e.error || e));
+    });
+
+    // 1) Leaflet が読み込めているかチェック
+    if (typeof L === 'undefined') {
+      showErr(
+        'Leaflet が読み込めていません。\n\n' +
+        '次のURLが 404 になっていないか確認してください:\n' +
+        '  ./leaflet/leaflet.css\n' +
+        '  ./leaflet/leaflet.js\n' +
+        '  ./leaflet/images/layers.png（images内のいずれか）\n'
+      );
+      throw new Error('Leaflet not loaded');
+    }
+
+    // 2) ここまで来れば Leaflet はOK。地図を必ず出す
     const bounds = [
-      [43.164612494, 143.139904716], // 南西
-      [43.16595066,  143.143384195]  // 北東
+      [43.164612494, 143.139904716],
+      [43.16595066,  143.143384195]
     ];
 
-    // 地図
     const map = L.map('map');
 
-    // 背景地図
     const osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '© OpenStreetMap contributors'
     }).addTo(map);
 
-    // 解析画像（キャッシュ回避で ?v= を付ける）
-    const img = L.imageOverlay(
-      './sihoro_20251210.JPG?v=1',
-      bounds,
-      { opacity: 1.0 }
-    ).addTo(map);
+    // 3) 画像は「実際のファイル名」と完全一致にすること！
+    //   例：GitHub上で .jpg なら .jpg / .JPG なら .JPG
+    const imgUrl = './sihoro_20251210.jpg?v=1';
 
-    // 画像範囲へズーム
+    const img = L.imageOverlay(imgUrl, bounds, { opacity: 1.0 }).addTo(map);
     map.fitBounds(bounds);
 
-    // レイヤ切り替え
     L.control.layers(
       { '地図（OSM）': osm },
-      { '解析画像（2025/12/10）': img }
+      { '解析画像': img }
     ).addTo(map);
+
+    // 画像ロード失敗も表示（これが出たらURLか拡張子が違います）
+    img.on('error', () => {
+      showErr('画像の読み込みに失敗しました:\n' + imgUrl + '\n\n（拡張子の大小文字、ファイル名、場所を確認）');
+    });
   </script>
 </body>
 </html>
