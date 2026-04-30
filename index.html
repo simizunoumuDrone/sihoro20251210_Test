@@ -3,129 +3,120 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Leaflet ローダー診断（fetch不使用）</title>
+  <title>超診断（JSが動くか確認）</title>
   <style>
     html, body { margin:0; padding:0; width:100%; height:100%; }
-    #map { width:100%; height:100%; }
-    #log {
-      position: fixed; left: 10px; top: 10px; z-index: 999999;
-      background: rgba(0,0,0,0.82); color: #fff;
-      padding: 10px 12px; border-radius: 8px;
-      font: 13px/1.4 sans-serif;
-      max-width: 92vw; white-space: pre-wrap;
+    #panel{
+      position:fixed; left:10px; top:10px; z-index:999999;
+      background:rgba(0,0,0,0.85); color:#fff;
+      padding:10px 12px; border-radius:8px;
+      font:13px/1.5 sans-serif; max-width:92vw; white-space:pre-wrap;
     }
+    #map{ position:absolute; left:0; right:0; top:0; bottom:0; }
   </style>
 </head>
 <body>
   <div id="map"></div>
-  <div id="log">開始…</div>
+  <div id="panel">HTML表示OK（ここが見えていれば index.html は反映されています）</div>
 
-  <script>
-    const logEl = document.getElementById('log');
-    const log = (s) => { logEl.textContent = s; };
+<script>
+(() => {
+  const panel = document.getElementById('panel');
+  const lines = [];
+  const add = (s) => { lines.push(s); panel.textContent = lines.join("\n"); };
 
-    // ここだけ：候補パス（置き場がどこでも順番に試す）
-    const candidates = [
-      { name: 'leaflet/',      css: './leaflet/leaflet.css',      js: './leaflet/leaflet.js' },
-      { name: 'leaflet/dist/', css: './leaflet/dist/leaflet.css', js: './leaflet/dist/leaflet.js' },
-      { name: 'dist/',         css: './dist/leaflet.css',         js: './dist/leaflet.js' }
-    ];
+  // 1) JSが動いているか（必ず最初に表示）
+  add("JS開始: OK  " + new Date().toLocaleString());
+  add("URL: " + location.href);
 
-    // 画像（sihoroで固定、jpg/JPG両方試す）
-    const imageCandidates = [
-      './sihoro_20251210.jpg',
-      './sihoro_20251210.JPG'
-    ];
+  // 2) JSエラーが起きたら必ず表示（真っ白回避）
+  window.addEventListener('error', (e) => {
+    add("❌ JSエラー: " + (e.message || e.error || e));
+  });
+  window.addEventListener('unhandledrejection', (e) => {
+    add("❌ Promiseエラー: " + (e.reason || e));
+  });
 
-    const bounds = [
-      [43.164612494, 143.139904716],
-      [43.16595066,  143.143384195]
-    ];
+  // 3) Leafletの置き場候補（ここは固定）
+  const candidates = [
+    { name:"./leaflet/",      css:"./leaflet/leaflet.css",      js:"./leaflet/leaflet.js",      img:"./leaflet/images/layers.png" },
+    { name:"./leaflet/dist/", css:"./leaflet/dist/leaflet.css", js:"./leaflet/dist/leaflet.js", img:"./leaflet/dist/images/layers.png" },
+    { name:"./dist/",         css:"./dist/leaflet.css",         js:"./dist/leaflet.js",         img:"./dist/images/layers.png" },
+  ];
 
-    function loadCSS(href) {
-      return new Promise((resolve, reject) => {
-        const link = document.createElement('link');
-        link.rel = 'stylesheet';
-        link.href = href + '?v=' + Date.now();
-        link.onload = () => resolve(href);
-        link.onerror = () => reject(new Error('CSS load failed: ' + href));
-        document.head.appendChild(link);
-      });
+  // 4) タイムアウト付きでCSS/JSを読む（fetch不使用）
+  const loadCSS = (href, ms=2500) => new Promise((resolve, reject) => {
+    const link = document.createElement("link");
+    link.rel = "stylesheet";
+    link.href = href + "?v=" + Date.now();
+    const t = setTimeout(() => reject(new Error("CSS timeout")), ms);
+    link.onload = () => { clearTimeout(t); resolve("OK"); };
+    link.onerror = () => { clearTimeout(t); reject(new Error("CSS error")); };
+    document.head.appendChild(link);
+  });
+
+  const loadJS = (src, ms=2500) => new Promise((resolve, reject) => {
+    const s = document.createElement("script");
+    s.src = src + "?v=" + Date.now();
+    const t = setTimeout(() => reject(new Error("JS timeout")), ms);
+    s.onload = () => { clearTimeout(t); resolve("OK"); };
+    s.onerror = () => { clearTimeout(t); reject(new Error("JS error")); };
+    document.head.appendChild(s);
+  });
+
+  const loadIMG = (src, ms=2500) => new Promise((resolve, reject) => {
+    const img = new Image();
+    const t = setTimeout(() => reject(new Error("IMG timeout")), ms);
+    img.onload = () => { clearTimeout(t); resolve("OK"); };
+    img.onerror = () => { clearTimeout(t); reject(new Error("IMG error")); };
+    img.src = src + "?v=" + Date.now();
+  });
+
+  // 5) 画像ファイル（sihoro）も存在確認（jpg/JPG両方）
+  const imgCandidates = ["./sihoro_20251210.jpg", "./sihoro_20251210.JPG"];
+
+  async function checkSihoroImage(){
+    add("");
+    add("=== 解析画像（sihoro_20251210）の存在確認 ===");
+    for (const u of imgCandidates){
+      try { await loadIMG(u, 2000); add("✅ " + u + " : OK"); return u; }
+      catch(e){ add("❌ " + u + " : " + e.message); }
     }
+    add("→ 解析画像は見つかりません（ファイル名/場所/大小文字を確認）");
+    return null;
+  }
 
-    function loadJS(src) {
-      return new Promise((resolve, reject) => {
-        const s = document.createElement('script');
-        s.src = src + '?v=' + Date.now();
-        s.onload = () => resolve(src);
-        s.onerror = () => reject(new Error('JS load failed: ' + src));
-        document.head.appendChild(s);
-      });
-    }
+  // 6) Leaflet候補を順に試す（1つでも成功したら地図を出す）
+  async function tryLeaflet(){
+    add("");
+    add("=== Leaflet の置き場診断（候補を順に試します）===");
+    for (const c of candidates){
+      add("");
+      add("▶ 試行: " + c.name);
+      add("  CSS: " + c.css);
+      add("  JS : " + c.js);
+      add("  IMG: " + c.img);
 
-    async function tryLoadLeaflet() {
-      for (const c of candidates) {
-        log('Leaflet読込中…\n試行: ' + c.name + '\nCSS: ' + c.css + '\nJS : ' + c.js);
-        try {
-          await loadCSS(c.css);
-          await loadJS(c.js);
-          if (typeof L !== 'undefined') {
-            return c;
-          }
-          throw new Error('Loaded but L is undefined');
-        } catch (e) {
-          log('失敗: ' + c.name + '\n' + e.message + '\n次を試します…');
-        }
-      }
-      throw new Error('Leafletをどの候補からも読み込めませんでした');
-    }
-
-    function tryLoadImage(map) {
-      return new Promise((resolve) => {
-        let idx = 0;
-        const next = () => {
-          if (idx >= imageCandidates.length) return resolve(null);
-          const url = imageCandidates[idx++] + '?v=' + Date.now();
-
-          // 画像の存在確認は <img> の onload/onerror で（fetch不使用）
-          const img = new Image();
-          img.onload = () => resolve(url);
-          img.onerror = () => next();
-          img.src = url;
-        };
-        next();
-      });
-    }
-
-    function startMap(leafletInfo, imageUrl) {
-      const map = L.map('map');
-      const osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '© OpenStreetMap contributors'
-      }).addTo(map);
-
-      // 目印：赤い四角
-      L.rectangle(bounds, { color: 'red', weight: 2, fillOpacity: 0.15 }).addTo(map);
-      map.fitBounds(bounds);
-
-      if (imageUrl) {
-        L.imageOverlay(imageUrl, bounds, { opacity: 1.0 }).addTo(map);
-        log('✅ 起動成功\nLeaflet: ' + leafletInfo.name + '\n画像: ' + imageUrl + '\n（赤枠＋画像が見えればOK）');
-      } else {
-        log('✅ Leafletは起動しましたが、画像が見つかりません\nLeaflet: ' + leafletInfo.name +
-            '\n探したファイル: sihoro_20251210.jpg / sihoro_20251210.JPG\n→ ファイル名（大小）と場所を確認してください');
-      }
-
-      // レイヤ切替（ダッシュボード化）
-      const overlays = {};
-      if (imageUrl) overlays['解析画像（sihoro_20251210）'] = L.imageOverlay(imageUrl, bounds, { opacity: 1.0 });
-      L.control.layers({ '地図（OSM）': osm }, overlays).addTo(map);
-    }
-
-    (async () => {
       try {
-        const info = await tryLoadLeaflet();
-        const mapTemp = {}; // ダミー
-        const imgUrl = await tryLoadImage(mapTemp);
-        startMap(info, imgUrl);
-      } catch (e) {
-        log('❌ 起動失敗\n' + e.message + '\n\n原因：leaflet.js/leaflet.css が Pages から読めていない可能性が高いです。\n' +
+        await loadCSS(c.css);
+        add("  ✅ CSS OK");
+      } catch(e){
+        add("  ❌ CSS NG: " + e.message);
+        continue;
+      }
+
+      try {
+        await loadJS(c.js);
+        add("  ✅ JS OK");
+      } catch(e){
+        add("  ❌ JS NG: " + e.message);
+        continue;
+      }
+
+      // JSが読めたら L があるか確認
+      if (typeof L === "undefined"){
+        add("  ❌ L が未定義（leaflet.jsが中身違い/読み込み失敗）");
+        continue;
+      }
+      add("  ✅ L 定義OK（Leaflet起動可能）");
+
