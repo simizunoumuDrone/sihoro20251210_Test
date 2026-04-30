@@ -4,13 +4,13 @@
   <meta charset="utf-8">
   <title>Web GIS ダッシュボード</title>
 
-  <!-- Leaflet CSS（必須） -->
+  <!-- ✅ Leaflet CSS（正しい） -->
   <link
     rel="stylesheet"
     href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
   />
 
-  <!-- Leaflet JS（必須） -->
+  <!-- ✅ Leaflet JS（正しい） -->
   <script
     src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js">
   </script>
@@ -30,46 +30,55 @@
 </head>
 
 <body>
-  <div id="map"></div>
+<div id="map"></div>
 
-  <script>
-    // -------- 画像の表示範囲（確定値） --------
-    var bounds = [
-      [43.164612494, 143.139904716], // 南西（lat, lon）
-      [43.16595066,  143.143384195]  // 北東（lat, lon）
-    ];
+<script>
+  // --------------------
+  // 画像の表示範囲（確定値）
+  // --------------------
+  var bounds = [
+    [43.164612494, 143.139904716], // 南西
+    [43.16595066,  143.143384195]  // 北東
+  ];
 
-    // -------- ベースマップ --------
-    var baseMap = L.tileLayer(
-      'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
-      { attribution: '© OpenStreetMap contributors' }
-    );
+  // --------------------
+  // ベースマップ
+  // --------------------
+  var baseMap = L.tileLayer(
+    'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+    { attribution: '© OpenStreetMap contributors' }
+  );
 
-    // -------- 解析画像レイヤ（JPG） --------
-    var analysisLayer = L.imageOverlay(
-      'https://simizunoumuDrone.github.io/sohoro20251210_Test/sihoro_20251210.jpg',
-      bounds,
-      { opacity: 1.0 }
-    );
+  // --------------------
+  // JPG 解析画像レイヤ
+  // --------------------
+  var analysisLayer = L.imageOverlay(
+    'https://simizunumDrone.github.io/sohoron20251210_Test/sihoro_20251210.JPG',
+    bounds,
+    { opacity: 1.0 }
+  );
 
-    // -------- 地図初期化 --------
-    var map = L.map('map', {
-      layers: [baseMap, analysisLayer]
-    });
+  // --------------------
+  // 地図初期化
+  // --------------------
+  var map = L.map('map', {
+    layers: [baseMap, analysisLayer]
+  });
 
-    // 画像範囲にズーム
-    map.fitBounds(bounds);
+  map.fitBounds(bounds);
 
-    // -------- レイヤ切り替えUI --------
-    var baseLayers = {
-      "地図（OSM）": baseMap
-    };
+  // --------------------
+  // レイヤ切り替え（ダッシュボード化）
+  // --------------------
+  var baseLayers = {
+    "地図（OSM）": baseMap
+  };
 
-    var overlays = {
-      "解析画像": analysisLayer
-    };
+  var overlayLayers = {
+    "解析画像": analysisLayer
+  };
 
-    L.control.layers(baseLayers, overlays).addTo(map);
-  </script>
+  L.control.layers(baseLayers, overlayLayers).addTo(map);
+</script>
 </body>
 </html>
