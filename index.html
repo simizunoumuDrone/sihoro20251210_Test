@@ -1,84 +1,70 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="utf-8">
-  <title>Web GIS ダッシュボード</title>
+<meta charset="utf-8">
+<title>Web GIS ダッシュボード</title>
 
-  <!-- ✅ Leaflet CSS（正しい） -->
-  <link
-    rel="stylesheet"
-    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-  />
+<!-- ✅ 正しい Leaflet CSS -->
+<link
+  rel="stylesheet"
+  href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+/>
 
-  <!-- ✅ Leaflet JS（正しい） -->
-  <script
-    src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js">
-  </script>
+<!-- ✅ 正しい Leaflet JS -->
+<script
+  src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js">
+</script>
 
-  <style>
-    html, body {
-      margin: 0;
-      padding: 0;
-      width: 100%;
-      height: 100%;
-    }
-    #map {
-      width: 100%;
-      height: 100%;
-    }
-  </style>
+<style>
+html, body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+}
+#map {
+  width: 100%;
+  height: 100%;
+}
+</style>
 </head>
 
 <body>
 <div id="map"></div>
 
 <script>
-  // --------------------
-  // 画像の表示範囲（確定値）
-  // --------------------
-  var bounds = [
+  // 表示範囲（確定値）
+  const bounds = [
     [43.164612494, 143.139904716], // 南西
     [43.16595066,  143.143384195]  // 北東
   ];
 
-  // --------------------
   // ベースマップ
-  // --------------------
-  var baseMap = L.tileLayer(
+  const baseMap = L.tileLayer(
     'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
     { attribution: '© OpenStreetMap contributors' }
   );
 
-  // --------------------
-  // JPG 解析画像レイヤ
-  // --------------------
-  var analysisLayer = L.imageOverlay(
-    'https://simizunumDrone.github.io/sohoron20251210_Test/sihoro_20251210.JPG',
+  // JPG レイヤ
+  const imageLayer = L.imageOverlay(
+    'https://simizunumDrone.github.io/sohoron20251210_Test/sohoro_20251210.JPG',
     bounds,
     { opacity: 1.0 }
   );
 
-  // --------------------
   // 地図初期化
-  // --------------------
-  var map = L.map('map', {
-    layers: [baseMap, analysisLayer]
+  const map = L.map('map', {
+    layers: [baseMap, imageLayer]
   });
 
+  // 論理的に必須
   map.fitBounds(bounds);
 
-  // --------------------
-  // レイヤ切り替え（ダッシュボード化）
-  // --------------------
-  var baseLayers = {
-    "地図（OSM）": baseMap
-  };
-
-  var overlayLayers = {
-    "解析画像": analysisLayer
-  };
-
-  L.control.layers(baseLayers, overlayLayers).addTo(map);
+  // レイヤ切替（ダッシュボード）
+  L.control.layers(
+    { "背景地図（OSM）": baseMap },
+    { "解析画像": imageLayer }
+  ).addTo(map);
 </script>
 </body>
 </html>
