@@ -120,3 +120,60 @@
       }
       add("  ✅ L 定義OK（Leaflet起動可能）");
 
+      // images確認（任意だが、あると安心）
+      try { await loadIMG(c.img, 1200); add("  ✅ images OK"); }
+      catch(e){ add("  ⚠ images NG: " + e.message + "（地図自体は動く場合があります）"); }
+
+      return c;
+    }
+    throw new Error("Leaflet をどの候補からも読み込めませんでした");
+  }
+
+  // 7) 地図表示（Leafletが見つかった場合のみ）
+  function startMap(leafletInfo, sihoroImageUrl){
+    add("");
+    add("=== 地図表示 ===");
+    const bounds = [
+      [43.164612494, 143.139904716],
+      [43.16595066,  143.143384195]
+    ];
+
+    const map = L.map("map");
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      attribution: "© OpenStreetMap contributors"
+    }).addTo(map);
+
+    L.rectangle(bounds, {color:"red", weight:2, fillOpacity:0.15}).addTo(map);
+    map.fitBounds(bounds);
+
+    if (sihoroImageUrl){
+      L.imageOverlay(sihoroImageUrl + "?v=" + Date.now(), bounds, {opacity:1.0}).addTo(map);
+      add("✅ 解析画像を重ねました: " + sihoroImageUrl);
+    } else {
+      add("⚠ 解析画像は未検出なので重ねていません");
+    }
+
+    add("");
+    add("✅ 完了");
+    add("Leaflet: " + leafletInfo.name);
+  }
+
+  // 実行
+  (async () => {
+    try{
+      const sihoroUrl = await checkSihoroImage();
+      const leafletInfo = await tryLeaflet();
+      startMap(leafletInfo, sihoroUrl);
+    }catch(e){
+      add("");
+      add("❌ 結果: 失敗");
+      add(String(e));
+      add("");
+      add("→ 原因は『leaflet.js/leaflet.css のパス（置き場）』か『ファイル名大小文字』です。");
+    }
+  })();
+
+})();
+</script>
+</body>
+</html>
