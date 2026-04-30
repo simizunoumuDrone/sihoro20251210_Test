@@ -3,17 +3,22 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Web GIS（診断）</title>
+  <title>診断ページ</title>
 
-  <!-- ローカル同梱 Leaflet -->
-  <link rel="stylesheet" href="./leaflet/leaflet.css?v=1" />
+  <!-- ローカル同梱Leaflet（必ず <link> / <script> タグで書く） -->
+  <link rel="stylesheet" href="./leaflet/leaflet.css?v=1">
   <script src="./leaflet/leaflet.js?v=1"></script>
 
   <style>
-    html, body { margin: 0; padding: 0; width: 100%; height: 100%; }
-    #map { width: 100%; height: 100%; }
+    html, body { margin:0; padding:0; width:100%; height:100%; }
+    #banner {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 999999;
+      background: #c00; color: #fff; padding: 10px 12px;
+      font: 14px/1.4 sans-serif;
+    }
+    #map { position:absolute; top:44px; left:0; right:0; bottom:0; }
     #err {
-      position: fixed; left: 10px; bottom: 10px; z-index: 99999;
+      position: fixed; left: 10px; bottom: 10px; z-index: 999999;
       background: rgba(0,0,0,0.78); color: #fff;
       padding: 10px 12px; border-radius: 8px;
       font: 13px/1.4 sans-serif; display: none;
@@ -23,34 +28,32 @@
 </head>
 
 <body>
+  <div id="banner">✅ 診断モード：この赤帯が見えない場合、URL違い or 反映されていません</div>
   <div id="map"></div>
   <div id="err"></div>
 
   <script>
     const errBox = document.getElementById('err');
-    function showErr(msg) {
-      errBox.style.display = 'block';
-      errBox.textContent = msg;
-    }
+    function showErr(msg){ errBox.style.display='block'; errBox.textContent=msg; }
 
-    // 画面が真っ白でも、JSエラーは必ず表示する
+    // JSエラーを必ず表示
     window.addEventListener('error', (e) => {
       showErr('JSエラー:\n' + (e.message || e.error || e));
     });
 
-    // 1) Leaflet が読み込めているかチェック
+    // Leaflet読込チェック（ここで止まるなら leaflet.js が読めていない）
     if (typeof L === 'undefined') {
       showErr(
         'Leaflet が読み込めていません。\n\n' +
         '次のURLが 404 になっていないか確認してください:\n' +
         '  ./leaflet/leaflet.css\n' +
         '  ./leaflet/leaflet.js\n' +
-        '  ./leaflet/images/layers.png（images内のいずれか）\n'
+        '  ./leaflet/images/（中のpng）\n'
       );
       throw new Error('Leaflet not loaded');
     }
 
-    // 2) ここまで来れば Leaflet はOK。地図を必ず出す
+    // ここまで来れば Leaflet はOK。赤い四角だけでも出す
     const bounds = [
       [43.164612494, 143.139904716],
       [43.16595066,  143.143384195]
@@ -62,22 +65,22 @@
       attribution: '© OpenStreetMap contributors'
     }).addTo(map);
 
-    // 3) 画像は「実際のファイル名」と完全一致にすること！
-    //   例：GitHub上で .jpg なら .jpg / .JPG なら .JPG
-    const imgUrl = './sihoro_20251210.jpg?v=1';
+    L.rectangle(bounds, {color:'red', weight:2, fillOpacity:0.2}).addTo(map);
 
-    const img = L.imageOverlay(imgUrl, bounds, { opacity: 1.0 }).addTo(map);
+    // 画像（実ファイル名に合わせる：jpg/JPG大小注意）
+    const imgUrl = './sihoro_20251210.jpg?v=1';  // ←必要なら .JPG に変更
+    const img = L.imageOverlay(imgUrl, bounds, {opacity:1.0}).addTo(map);
+
+    img.on('error', () => {
+      showErr('画像の読み込みに失敗しました:\n' + imgUrl + '\n\n（拡張子の大小文字・ファイル名・場所を確認）');
+    });
+
     map.fitBounds(bounds);
 
     L.control.layers(
       { '地図（OSM）': osm },
       { '解析画像': img }
     ).addTo(map);
-
-    // 画像ロード失敗も表示（これが出たらURLか拡張子が違います）
-    img.on('error', () => {
-      showErr('画像の読み込みに失敗しました:\n' + imgUrl + '\n\n（拡張子の大小文字、ファイル名、場所を確認）');
-    });
   </script>
 </body>
 </html>
