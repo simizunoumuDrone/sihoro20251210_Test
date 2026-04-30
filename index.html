@@ -2,51 +2,44 @@
 <html lang="ja">
 <head>
 <meta charset="utf-8">
-<title>地図表示テスト</title>
+<title>Map restore</title>
 
-<!-- Leaflet CSS -->
-<link
-  rel="stylesheet"
-  href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.cssrc="https://unpkg.com/leaflet@let.js
-</script>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
 <style>
-  html, body {
-    margin: 0;
-    padding: 0;
-  }
-  #map {
-    width: 100%;
-    height: 100vh;
-  }
+html, body {
+  margin: 0;
+  padding: 0;
+}
+#map {
+  width: 100%;
+  height: 100vh;
+}
 </style>
 </head>
-
 <body>
+
 <div id="map"></div>
 
 <script>
-  // 地図初期表示（少し広め）
-  var map = L.map('map').setView([43.1653, 143.1416], 17);
+var map = L.map('map').setView([43.1653, 143.1416], 16);
 
-  // 背景地図
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: '© OpenStreetMap contributors'
-  }).addTo(map);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  attribution: '© OpenStreetMap'
+}).addTo(map);
 
-  // PNG画像（フルURL）
-  var imageUrl =
-    'https://simizunumDrone.github.io/sohoron20251210_Test/sohoro_20251210.png';
+var imageUrl = 'https://simizunumDrone.github.io/sohoron20251210_Test/sohoro_20251210.png';
 
-  // ★ 正しい imageBounds（あなたが出してくれた値）
-  var imageBounds = [
-    [43.164612494, 143.139904716],
-    [43.16595066,  143.143384195]
-  ];
+/* 💡 わざと「広すぎる範囲」にしています */
+var imageBounds = [
+  [43.13, 143.13],
+  [43.18, 143.18]
+];
 
-  // 画像を地図に重ねる
-  L.imageOverlay(imageUrl, imageBounds).addTo(map);
+L.imageOverlay(imageUrl, imageBounds).addTo(map);
 </script>
+
 </body>
 </html>
 ``
