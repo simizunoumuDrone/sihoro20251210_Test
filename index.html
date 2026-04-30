@@ -1,61 +1,61 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="utf-8">
-  <title>Leaflet PNG Overlay Test</title>
+<meta charset="utf-8">
+<title>PNG Overlay Final</title>
 
-  <!-- Leaflet CSS -->
-  <link
-    rel="stylesheet"
-    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-  />
+<link
+  rel="stylesheet"
+  href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+/>
 
-  <!-- Leaflet JS -->
-  <script
-    src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js">
-  </script>
+<script
+  src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js">
+</script>
 
-  <style>
-    html, body {
-      margin: 0;
-      padding: 0;
-      width: 100%;
-      height: 100%;
-    }
-    #map {
-      width: 100%;
-      height: 100%;
-    }
-  </style>
+<style>
+html, body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+}
+#map {
+  width: 100%;
+  height: 100%;
+}
+</style>
 </head>
 
 <body>
-  <div id="map"></div>
+<div id="map"></div>
 
-  <script>
-    /* --- 地図初期化 --- */
-    var map = L.map('map');
+<script>
+  // 地図初期化
+  var map = L.map('map');
 
-    /* --- 背景地図 --- */
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '© OpenStreetMap contributors'
-    }).addTo(map);
+  // 背景地図
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '© OpenStreetMap contributors'
+  }).addTo(map);
 
-    /* --- PNG画像URL（必ずフルURL） --- */
-    var imageUrl =
-      'https://simizunoumuDrone.github.io/sihoro20251210_Test/sihoro_20251210.png';
+  // PNG（フルURL）
+  var imageUrl =
+    'https://simizunoumuDrone.github.io/sihoro20251210_Test/sihoro_20251210.png';
 
-    /* --- あなたがQGISで出した正しい範囲 --- */
-    var imageBounds = [
-      [43.164612494, 143.139904716],  // 南西
-      [43.16595066,  143.143384195]   // 北東
-    ];
+  // あなたが QGIS で出した正しい範囲
+  var imageBounds = [
+    [43.164612494, 143.139904716],  // 南西
+    [43.16595066,  143.143384195]   // 北東
+  ];
 
-    /* --- 画像を重ねる --- */
-    L.imageOverlay(imageUrl, imageBounds).addTo(map);
+  // PNGを重ねる
+  L.imageOverlay(imageUrl, imageBounds, {
+    opacity: 1.0
+  }).addTo(map);
 
-    /* --- ★ 画像範囲へ強制ズーム（最重要） --- */
-    map.fitBounds(imageBounds);
-  </script>
+  // 必ず画像にズーム
+  map.fitBounds(imageBounds);
+</script>
 </body>
 </html>
