@@ -3,84 +3,34 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>診断ページ</title>
-
-  <!-- ローカル同梱Leaflet（必ず <link> / <script> タグで書く） -->
-  <link rel="stylesheet" href="./leaflet/leaflet.css?v=1">
-  <script src="./leaflet/leaflet.js?v=1"></script>
-
+  <title>反映確認</title>
   <style>
-    html, body { margin:0; padding:0; width:100%; height:100%; }
+    html, body { margin: 0; padding: 0; }
     #banner {
-      position: fixed; top: 0; left: 0; right: 0; z-index: 999999;
-      background: #c00; color: #fff; padding: 10px 12px;
-      font: 14px/1.4 sans-serif;
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 999999;
+      background: #d00000;
+      color: #ffffff;
+      padding: 10px 12px;
+      font: 16px/1.4 sans-serif;
     }
-    #map { position:absolute; top:44px; left:0; right:0; bottom:0; }
-    #err {
-      position: fixed; left: 10px; bottom: 10px; z-index: 999999;
-      background: rgba(0,0,0,0.78); color: #fff;
-      padding: 10px 12px; border-radius: 8px;
-      font: 13px/1.4 sans-serif; display: none;
-      max-width: 92vw; white-space: pre-wrap;
+    #note {
+      margin-top: 60px;
+      padding: 12px;
+      font: 14px/1.6 sans-serif;
     }
+    code { background: #f3f3f3; padding: 2px 6px; border-radius: 4px; }
   </style>
 </head>
 
 <body>
-  <div id="banner">✅ 診断モード：この赤帯が見えない場合、URL違い or 反映されていません</div>
-  <div id="map"></div>
-  <div id="err"></div>
+  <div id="banner">✅ TEST-123（この赤帯が見えれば、最新index.htmlが配信されています）</div>
 
-  <script>
-    const errBox = document.getElementById('err');
-    function showErr(msg){ errBox.style.display='block'; errBox.textContent=msg; }
-
-    // JSエラーを必ず表示
-    window.addEventListener('error', (e) => {
-      showErr('JSエラー:\n' + (e.message || e.error || e));
-    });
-
-    // Leaflet読込チェック（ここで止まるなら leaflet.js が読めていない）
-    if (typeof L === 'undefined') {
-      showErr(
-        'Leaflet が読み込めていません。\n\n' +
-        '次のURLが 404 になっていないか確認してください:\n' +
-        '  ./leaflet/leaflet.css\n' +
-        '  ./leaflet/leaflet.js\n' +
-        '  ./leaflet/images/（中のpng）\n'
-      );
-      throw new Error('Leaflet not loaded');
-    }
-
-    // ここまで来れば Leaflet はOK。赤い四角だけでも出す
-    const bounds = [
-      [43.164612494, 143.139904716],
-      [43.16595066,  143.143384195]
-    ];
-
-    const map = L.map('map');
-
-    const osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '© OpenStreetMap contributors'
-    }).addTo(map);
-
-    L.rectangle(bounds, {color:'red', weight:2, fillOpacity:0.2}).addTo(map);
-
-    // 画像（実ファイル名に合わせる：jpg/JPG大小注意）
-    const imgUrl = './sihoro_20251210.jpg?v=1';  // ←必要なら .JPG に変更
-    const img = L.imageOverlay(imgUrl, bounds, {opacity:1.0}).addTo(map);
-
-    img.on('error', () => {
-      showErr('画像の読み込みに失敗しました:\n' + imgUrl + '\n\n（拡張子の大小文字・ファイル名・場所を確認）');
-    });
-
-    map.fitBounds(bounds);
-
-    L.control.layers(
-      { '地図（OSM）': osm },
-      { '解析画像': img }
-    ).addTo(map);
-  </script>
+  <div id="note">
+    <p>これは <strong>反映確認専用</strong> のページです。地図やLeafletはまだ読み込みません。</p>
+    <p>赤帯の <code>TEST-123</code> が見えれば、GitHub Pages の更新が反映できています。</p>
+    <p>見えなければ、キャッシュ or URL違いの可能性が高いです。</p>
+  </div>
 </body>
 </html>
